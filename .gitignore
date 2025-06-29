@@ -1,10 +1,12 @@
 # 🔒 Environment variables
 .env
+client/.env
+server/.env
 
-# 📦 Dependencies
+# 📦 Dependency folders
 node_modules/
 
-# 🏗️ Build output
+# 🚀 Build and output
 dist/
 dist-ssr/
 build/
@@ -18,7 +20,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# ⚙️ Editor/IDE and system junk
+# 🧠 Local overrides
+*.local
+
+# 🧑‍💻 Editor and system files
 .vscode/
 !.vscode/extensions.json
 .idea/
@@ -31,7 +36,3 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
-# 🔒 Ignore all .env files
-.env
-client/.env
-server/.env
