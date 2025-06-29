@@ -1,12 +1,24 @@
+
 import React, { useState, useCallback } from "react";
 import debounce from "lodash.debounce";
 import WeatherCard from "../homepage/Weathercard";
 import { FaMapMarkedAlt, FaChartLine, FaArrowRight } from "react-icons/fa";
+import { fetchAqi as fetchAqiFromService } from "../../services/aqiService";
 
-// ✅ Validation function
+// Utility: AQI to category
+const getCategory = (aqi) => {
+  if (aqi <= 50) return "Good";
+  if (aqi <= 100) return "Moderate";
+  if (aqi <= 150) return "Unhealthy (Sensitive)";
+  if (aqi <= 200) return "Unhealthy";
+  if (aqi <= 300) return "Very Unhealthy";
+  return "Hazardous";
+};
+
+// Utility: City name validator
 const isValidCity = (name) => /^[a-zA-Z\s]+$/.test(name.trim());
 
-// ✅ Input Component (moved outside)
+// Component: City Input Field
 const CityInput = ({ city, onChange, error }) => (
   <div className="mb-2">
     <input
@@ -24,40 +36,31 @@ const CityInput = ({ city, onChange, error }) => (
   </div>
 );
 
+// Component: Buttons (Map, Forecast)
 const ButtonGroup = () => (
   <div className="flex flex-col gap-4">
-    <button
-      className="bg-teal-700 px-6 py-3 rounded-xl text-white flex items-center justify-center gap-2 hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-      aria-label="View on Map"
-    >
+    <button className="bg-teal-700 px-6 py-3 rounded-xl text-white flex items-center justify-center gap-2 hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400">
       <FaMapMarkedAlt />
       View on Map
     </button>
-    <button
-      className="bg-teal-700 px-6 py-3 rounded-xl text-white flex items-center justify-center gap-2 hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-      aria-label="View Forecast"
-    >
+    <button className="bg-teal-700 px-6 py-3 rounded-xl text-white flex items-center justify-center gap-2 hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400">
       <FaChartLine />
       View Forecast
     </button>
-    <button
-      className="bg-teal-700 px-6 py-3 rounded-xl text-white flex justify-between items-center hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-      aria-label="View in Map"
-    >
+    <button className="bg-teal-700 px-6 py-3 rounded-xl text-white flex justify-between items-center hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400">
       View in Map <FaArrowRight />
     </button>
   </div>
 );
 
+// Component: Health Notes
 const HealthNotes = () => (
-  <div
-    className="bg-teal-700 text-white p-4 rounded-xl text-center"
-    aria-live="polite"
-  >
+  <div className="bg-teal-700 text-white p-4 rounded-xl text-center" aria-live="polite">
     Some health notes
   </div>
 );
 
+// ✅ Main Component
 const Homepage = () => {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,27 +84,39 @@ const Homepage = () => {
     debouncedValidate(value);
   };
 
-  const fetchAqi = () => {
-    if (!city.trim()) return setError("Please enter a city");
-    if (!isValidCity(city)) return setError("City name is invalid");
+  // 🧠 STEP 5: FIXED fetchAqi Function
+  const fetchAqi = async () => {
+    console.log("🟡 Fetching AQI triggered");
 
+    if (!city.trim()) return setError("Please enter a city");
+    if (!isValidCity(city)) return setError("Invalid city name");
+
+    const safeCity = city.trim().toLowerCase();
     setLoading(true);
     setError("");
     setAqiData(null);
 
-    // Simulated API response
-    setTimeout(() => {
+    try {
+      const aqiRes = await fetchAqiFromService(safeCity);
+      console.log("✅ API Success:", aqiRes);
+
+      if (!aqiRes || typeof aqiRes.aqi !== "number") {
+        console.error("❌ Invalid AQI response:", aqiRes);
+        throw new Error("Invalid AQI data");
+      }
+
       setAqiData({
-        aqi: 72,
-        category: "Moderate",
-        city: city.toUpperCase(),
-        temperature: 35,
-        humidity: 40,
-        wind: 15.9,
-        conditionIcon: "☀️",
+        aqi: aqiRes.aqi,
+        category: getCategory(aqiRes.aqi),
+        city: aqiRes.location || safeCity,
+        conditionIcon: "🌤️", // static placeholder
       });
+    } catch (error) {
+      console.error("Fetch error:", error.message);
+      setError("Failed to fetch AQI. Try a valid city.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -130,10 +145,7 @@ const Homepage = () => {
           </div>
         </div>
 
-        <div
-          className="flex justify-around mt-6 text-3xl"
-          aria-label="Air quality rating stars"
-        >
+        <div className="flex justify-around mt-6 text-3xl" aria-label="Air quality rating stars">
           <span className="text-lime-400" aria-hidden="true">★</span>
           <span className="text-yellow-400" aria-hidden="true">★</span>
           <span className="text-orange-400" aria-hidden="true">★</span>

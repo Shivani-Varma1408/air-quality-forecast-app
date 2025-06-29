@@ -2,16 +2,15 @@ import React from "react";
 
 const WeatherCard = ({ data }) => {
   // Use dummy fallback if no data passed
-  const {
-    conditionIcon = "☀️",
-    aqi = 72,
-    category = "Moderate",
-    city = "CHENNAI",
-    temperature = 35,
-    humidity = 40,
-    wind = 15.9,
-  } = data || {};
-
+const {
+  conditionIcon = "☀️",
+  aqi = 72,
+  category = "Moderate",
+  city,
+  temperature = 35,
+  humidity = 40,
+  wind = 15.9,
+} = data || {};
   return (
     <div
       className="bg-gradient-to-r from-yellow-200 to-orange-400 p-6 rounded-3xl w-full md:w-1/2 flex flex-col justify-between shadow-lg hover:shadow-xl transition-shadow duration-300"
