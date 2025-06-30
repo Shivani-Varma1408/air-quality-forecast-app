@@ -1,12 +1,15 @@
-// App.jsx
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Homepage from "./pages/homepage/Homepage";
+import MapPage from "./pages/mappage/MapPage"
 import React from 'react';
-import Homepage from './pages/homepage/Homepage';
-
 function App() {
   return (
-    <div >
-      <Homepage />
-    </div>
+      <Router>
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/map" element={<MapPage />} />
+      </Routes>
+    </Router>
   );
 }
 
