@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import debounce from "lodash.debounce";
 import { useNavigate } from "react-router-dom";
 import { IoSearchSharp } from "react-icons/io5";
-import { FaMapMarkedAlt, FaChartLine, FaArrowRight } from "react-icons/fa";
+import { FaMapMarkedAlt, FaChartLine, FaHeartbeat } from "react-icons/fa";
 import WeatherCard from "../homepage/Weathercard";
 import { fetchAqi as fetchAqiFromService, fetchWeather } from "../../services/aqiService";
 
@@ -34,10 +34,10 @@ const getWeatherIcon = (main) => {
   }
 };
 
-// Component: City Input Field
+// 🔹 City Input Field
 const CityInput = ({ city, onChange, error }) => (
   <div className="mb-2">
-   <div className="relative w-full">
+    <div className="relative w-full">
       <span className="absolute top-1/2 left-4 transform -translate-y-1/2 text-black text-xl">
         <IoSearchSharp />
       </span>
@@ -55,28 +55,36 @@ const CityInput = ({ city, onChange, error }) => (
   </div>
 );
 
-// Component: Buttons (Map, Forecast)
-const ButtonGroup = ({ onMapClick }) => (
-  <div className="flex flex-row gap-4 w-full">
+// 🔹 All 3 Buttons
+const ButtonGroup = ({ onMapClick, onForecastClick, onHealthClick }) => (
+  <div className="flex flex-row gap-4 flex-wrap w-full">
     <button
       onClick={onMapClick}
-      className="bg-teal-700 px-8 py-8 rounded-xl text-white flex items-center justify-center whitespace-nowrap gap-2 hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-      aria-label="View on Map"
+      className="bg-teal-700 px-8 py-6 rounded-xl text-white flex items-center justify-center gap-2 hover:bg-teal-800 focus:ring-2 focus:ring-teal-400"
     >
       <FaMapMarkedAlt />
       <span>View on Map</span>
     </button>
-     <button
-      className="bg-teal-700 px-8 py-8 rounded-xl text-white flex items-center justify-center whitespace-nowrap gap-2 hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-      aria-label="View Forecast"
+
+    <button
+      onClick={onForecastClick}
+      className="bg-teal-700 px-8 py-6 rounded-xl text-white flex items-center justify-center gap-2 hover:bg-teal-800 focus:ring-2 focus:ring-teal-400"
     >
       <FaChartLine />
-     <span>View Forecast</span>
+      <span>View Forecast</span>
+    </button>
+
+    <button
+      onClick={onHealthClick}
+      className="bg-teal-700 px-8 py-6 rounded-xl text-white flex items-center justify-center gap-2 hover:bg-teal-800 focus:ring-2 focus:ring-teal-400"
+    >
+      <FaHeartbeat />
+      <span>View Health Chart</span>
     </button>
   </div>
 );
 
-// Component: Health Notes
+// 🔹 Health Notes filler
 const HealthNotes = () => (
   <div className="bg-teal-700 text-white px-8 py-8 rounded-xl text-center" aria-live="polite">
     Some health notes
@@ -85,7 +93,7 @@ const HealthNotes = () => (
 
 // ✅ Main Component
 const Homepage = () => {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -108,10 +116,7 @@ const Homepage = () => {
     debouncedValidate(value);
   };
 
-  // ✅ Combined AQI + Weather fetch
   const fetchAqi = async () => {
-    console.log("🟡 Fetching AQI + Weather triggered");
-
     if (!city.trim()) return setError("Please enter a city");
     if (!isValidCity(city)) return setError("Invalid city name");
 
@@ -138,10 +143,14 @@ const Homepage = () => {
         temperature: weatherRes?.main?.temp ?? 0,
         humidity: weatherRes?.main?.humidity ?? 0,
         wind: (weatherRes?.wind?.speed ?? 0) * 3.6,
+        locationType: "urban", // you can make dynamic later
+        metadata: {
+          source: aqiRes?.source || "Ground Station",
+        },
       });
-    } catch (error) {
-      console.error("Fetch error:", error.message);
-      setError("Failed to fetch AQI or weather. Try a valid city.");
+    } catch (err) {
+      console.error("Error fetching AQI/Weather:", err);
+      setError("Failed to fetch data. Try again.");
     } finally {
       setLoading(false);
     }
@@ -159,12 +168,12 @@ const Homepage = () => {
           className={`mb-4 px-6 py-3 rounded-xl text-white ${loading || !!error || !city.trim()
             ? "bg-teal-400 cursor-not-allowed"
             : "bg-teal-700 hover:bg-teal-800"
-          }`}
+            }`}
         >
           {loading ? "Loading..." : "Get AQI"}
         </button>
 
-         <div className="flex gap-4 flex-wrap md:flex-nowrap items-stretch h-[300px]">
+        <div className="flex gap-4 flex-wrap md:flex-nowrap items-stretch h-[300px]">
           {aqiData && (
             <div className="flex-1 min-w-[250px]">
               <WeatherCard data={aqiData} loading={loading} />
@@ -173,24 +182,26 @@ const Homepage = () => {
 
           <div className="flex flex-col gap-4 flex-1 min-w-[250px]">
             <div className="flex-1">
-              <ButtonGroup onMapClick={() => navigate("/map")} />
+              <ButtonGroup
+                onMapClick={() => navigate("/map")}
+                onForecastClick={() => navigate(`/trends?city=${encodeURIComponent(city)}`)}
+                onHealthClick={() =>
+                  navigate("/health", {
+                    state: {
+                      aqi: aqiData?.aqi,
+                      location: aqiData?.city,
+                      locationType: aqiData?.locationType,
+                      source: aqiData?.metadata?.source,
+                    },
+                  })
+                }
+              />
             </div>
             <div className="flex-1">
               <HealthNotes />
             </div>
           </div>
         </div>
-
-       {/*
-<div className="flex justify-around mt-6 text-3xl" aria-label="Air quality rating stars">
-  <span className="text-lime-400" aria-hidden="true">★</span>
-  <span className="text-yellow-400" aria-hidden="true">★</span>
-  <span className="text-orange-400" aria-hidden="true">★</span>
-  <span className="text-red-500" aria-hidden="true">★</span>
-  <span className="text-purple-400" aria-hidden="true">★</span>
-</div>
-*/}
-
       </div>
     </div>
   );

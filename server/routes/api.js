@@ -15,11 +15,17 @@ Object.entries(cityInfo).forEach(([key, meta]) => {
   }
 });
 
-// ✅ Rate limiter
+// ✅ Rate limiters
 const aqiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: { error: "Too many requests, please try again later" }
+});
+
+const historicalLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30,
+  message: { error: "Too many historical requests, please try again later" }
 });
 
 // ✅ Health check
@@ -133,6 +139,29 @@ router.get("/all-aqi", aqiLimiter, async (req, res) => {
   } catch (error) {
     console.error("❌ /all-aqi fatal error:", error.message);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// 📌 Historical AQI from OpenAQ
+router.get("/historical", historicalLimiter, async (req, res) => {
+  const { city, parameter, from, to } = req.query;
+
+  if (!city || !parameter || !from || !to) {
+    return res.status(400).json({ error: "Missing required query parameters." });
+  }
+
+  try {
+    const url = `https://api.openaq.org/v2/measurements?city=${encodeURIComponent(
+      city
+    )}&parameter=${parameter}&date_from=${from}&date_to=${to}&limit=1000&country=IN&sort=desc`;
+
+    const response = await axios.get(url);
+    const results = response.data?.results || [];
+
+    res.json(results);
+  } catch (err) {
+    console.error("❌ Historical AQI Error:", err.message);
+    res.status(500).json({ error: "Failed to fetch historical AQI data." });
   }
 });
 

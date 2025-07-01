@@ -8,7 +8,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { IoSearchSharp } from "react-icons/io5";
-import { fetchAllAqi } from "../../services/aqiService"; // ✅ use real data
+import { fetchAllAqi } from "../../services/aqiService";
 
 const getAQIColor = (aqi) => {
   if (aqi <= 50) return "green";
@@ -70,7 +70,9 @@ const MapPage = () => {
   const [markerPosition, setMarkerPosition] = useState(null);
   const [satelliteView, setSatelliteView] = useState(false);
   const [noDataMessage, setNoDataMessage] = useState("");
-  const [aqiData, setAqiData] = useState([]); // ✅ Live AQI data
+  const [aqiData, setAqiData] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [customPin, setCustomPin] = useState(null);
   const inputRef = useRef();
 
   useEffect(() => {
@@ -107,6 +109,7 @@ const MapPage = () => {
     setSearchInput(city.name);
     setSuggestions([]);
     setNoDataMessage("");
+    setCustomPin(null); // clear any custom pin
   };
 
   const handleKeyDown = (e) => {
@@ -118,41 +121,80 @@ const MapPage = () => {
         setSelectedCity(null);
         setMarkerPosition([22.9734, 78.6569]);
         setNoDataMessage(`No data for "${searchInput}".`);
+        setCustomPin(null);
       }
     }
   };
 
   const toggleSatellite = () => setSatelliteView(!satelliteView);
 
+  const handleUseMyLocation = async () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SERVER_URL}/api/aqi-coords?lat=${lat}&lon=${lon}`
+        );
+        const data = await res.json();
+
+        if (data.error) {
+          alert("AQI fetch failed: " + data.error);
+          return;
+        }
+
+        setUserLocation({
+          lat,
+          lon,
+          aqi: data.aqi,
+          pollutant: data.pollutant,
+          city: data.city || "Unknown",
+          source: data.source || "coord-api"
+        });
+
+        setMarkerPosition([lat, lon]);
+        setSelectedCity(null);
+        setNoDataMessage("");
+        setCustomPin(null);
+      } catch (err) {
+        alert("Something went wrong: " + err.message);
+      }
+    }, () => {
+      alert("Unable to retrieve your location.");
+    });
+  };
+
   return (
     <div style={{ height: "100vh", width: "100%", position: "relative" }}>
       <AQILegend />
 
-      {/* Search & Toggle */}
-      <div
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-          zIndex: 1000,
-          backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-          padding: "8px",
-          width: "260px"
-        }}
-      >
+      {/* Search and controls */}
+      <div style={{
+        position: "absolute",
+        top: "10px",
+        right: "10px",
+        zIndex: 1000,
+        backgroundColor: "white",
+        borderRadius: "8px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+        padding: "8px",
+        width: "260px"
+      }}>
         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           <div style={{ position: "relative", flex: 1 }}>
-            <IoSearchSharp
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "8px",
-                transform: "translateY(-50%)",
-                color: "#888"
-              }}
-            />
+            <IoSearchSharp style={{
+              position: "absolute",
+              top: "50%",
+              left: "8px",
+              transform: "translateY(-50%)",
+              color: "#888"
+            }} />
             <input
               ref={inputRef}
               type="text"
@@ -170,28 +212,24 @@ const MapPage = () => {
               }}
             />
           </div>
-          <button
-            onClick={() => {
-              if (suggestions.length > 0) {
-                handleSelectSuggestion(suggestions[0]);
-              } else {
-                setSelectedCity(null);
-                setMarkerPosition([22.9734, 78.6569]);
-                setNoDataMessage(`No data for "${searchInput}".`);
-              }
-            }}
-            style={{
-              padding: "6px 10px",
-              backgroundColor: "#007B83",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px"
-            }}
-          >
-            Go
-          </button>
+          <button onClick={() => {
+            if (suggestions.length > 0) {
+              handleSelectSuggestion(suggestions[0]);
+            } else {
+              setSelectedCity(null);
+              setMarkerPosition([22.9734, 78.6569]);
+              setNoDataMessage(`No data for "${searchInput}".`);
+              setCustomPin(null);
+            }
+          }} style={{
+            padding: "6px 10px",
+            backgroundColor: "#007B83",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "14px"
+          }}>Go</button>
         </div>
 
         {suggestions.length > 0 && (
@@ -204,34 +242,36 @@ const MapPage = () => {
             background: "white"
           }}>
             {suggestions.map((city, index) => (
-              <div
-                key={index}
-                onClick={() => handleSelectSuggestion(city)}
-                style={{
-                  padding: "6px 10px",
-                  cursor: "pointer",
-                  borderBottom: "1px solid #eee"
-                }}
-              >
-                {city.name}
-              </div>
+              <div key={index} onClick={() => handleSelectSuggestion(city)} style={{
+                padding: "6px 10px",
+                cursor: "pointer",
+                borderBottom: "1px solid #eee"
+              }}>{city.name}</div>
             ))}
           </div>
         )}
 
-        <button
-          onClick={toggleSatellite}
-          style={{
-            marginTop: "8px",
-            width: "100%",
-            padding: "6px 10px",
-            backgroundColor: "#007B83",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer"
-          }}
-        >
+        <button onClick={handleUseMyLocation} style={{
+          marginTop: "8px",
+          width: "100%",
+          padding: "6px 10px",
+          backgroundColor: "#00996D",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer"
+        }}>📍 Use My Location</button>
+
+        <button onClick={toggleSatellite} style={{
+          marginTop: "8px",
+          width: "100%",
+          padding: "6px 10px",
+          backgroundColor: "#007B83",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer"
+        }}>
           {satelliteView ? "Switch to Map View" : "Switch to Satellite View"}
         </button>
       </div>
@@ -240,52 +280,112 @@ const MapPage = () => {
         center={markerPosition || [22.9734, 78.6569]}
         zoom={markerPosition ? 10 : 5}
         style={{ height: "100%", width: "100%" }}
+        onClick={async (e) => {
+          const lat = e.latlng.lat;
+          const lon = e.latlng.lng;
+
+          try {
+            const res = await fetch(
+              `${import.meta.env.VITE_SERVER_URL}/api/aqi-coords?lat=${lat}&lon=${lon}`
+            );
+            const data = await res.json();
+
+            if (data.error) {
+              alert("Could not fetch AQI for that location.");
+              return;
+            }
+
+            setCustomPin({
+              lat,
+              lon,
+              aqi: data.aqi,
+              pollutant: data.pollutant,
+              city: data.city || "Unknown",
+              source: data.source || "coord-api"
+            });
+            setMarkerPosition([lat, lon]);
+            setSelectedCity(null);
+            setNoDataMessage("");
+          } catch (err) {
+            alert("Error: " + err.message);
+          }
+        }}
       >
         <TileLayer
           attribution='&copy; OpenStreetMap contributors'
-          url={
-            satelliteView
-              ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          }
+          url={satelliteView
+            ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
         />
 
+        {/* Selected City */}
         {markerPosition && selectedCity && (
           <>
             <MapFlyTo position={markerPosition} />
-            <CircleMarker
-              center={markerPosition}
-              radius={12}
-              pathOptions={{
-                color: getAQIColor(selectedCity.aqi),
-                fillColor: getAQIColor(selectedCity.aqi),
-                fillOpacity: 0.8
-              }}
-            >
+            <CircleMarker center={markerPosition} radius={12} pathOptions={{
+              color: getAQIColor(selectedCity.aqi),
+              fillColor: getAQIColor(selectedCity.aqi),
+              fillOpacity: 0.8
+            }}>
               <Popup>
                 📍 {selectedCity.name}<br />
                 AQI: {selectedCity.aqi}<br />
-                Pollutant: {selectedCity.pollutant}
+                Pollutant: {selectedCity.pollutant}<br />
+                Source: {selectedCity.source || "city-api"}
               </Popup>
             </CircleMarker>
           </>
         )}
 
-        {aqiData.map((city, index) => (
-          <CircleMarker
-            key={index}
-            center={[city.lat, city.lon]}
-            radius={10}
-            pathOptions={{
-              color: getAQIColor(city.aqi),
-              fillColor: getAQIColor(city.aqi),
+        {/* User Location */}
+        {userLocation && (
+          <>
+            <MapFlyTo position={[userLocation.lat, userLocation.lon]} />
+            <CircleMarker center={[userLocation.lat, userLocation.lon]} radius={12} pathOptions={{
+              color: getAQIColor(userLocation.aqi),
+              fillColor: getAQIColor(userLocation.aqi),
               fillOpacity: 0.8
-            }}
-          >
+            }}>
+              <Popup>
+                📍 You are near {userLocation.city}<br />
+                AQI: {userLocation.aqi}<br />
+                Pollutant: {userLocation.pollutant}<br />
+                Source: {userLocation.source || "coord-api"}
+              </Popup>
+            </CircleMarker>
+          </>
+        )}
+
+        {/* Custom Pin Drop */}
+        {customPin && (
+          <CircleMarker center={[customPin.lat, customPin.lon]} radius={14} pathOptions={{
+            color: "#3399ff",
+            fillColor: "#3399ff",
+            fillOpacity: 0.6
+          }}>
+            <Popup>
+              📌 Custom Pin<br />
+              Lat: {customPin.lat.toFixed(3)}<br />
+              Lon: {customPin.lon.toFixed(3)}<br />
+              AQI: {customPin.aqi}<br />
+              Pollutant: {customPin.pollutant}<br />
+              Source: {customPin.source}
+            </Popup>
+          </CircleMarker>
+        )}
+
+        {/* All Cities */}
+        {aqiData.map((city, index) => (
+          <CircleMarker key={index} center={[city.lat, city.lon]} radius={10} pathOptions={{
+            color: getAQIColor(city.aqi),
+            fillColor: getAQIColor(city.aqi),
+            fillOpacity: 0.8
+          }}>
             <Popup>
               📍 {city.name}<br />
               AQI: {city.aqi}<br />
-              Pollutant: {city.pollutant}
+              Pollutant: {city.pollutant}<br />
+              Source: {city.source || "city-api"}
             </Popup>
           </CircleMarker>
         ))}

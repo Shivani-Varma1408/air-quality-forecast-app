@@ -49,3 +49,11 @@ export const fetchAllAqi = async () => {
     throw err;
   }
 };
+
+export async function fetchHistoricalAQIData(city, parameter, fromDate, toDate) {
+  const response = await fetch(
+    `https://api.openaq.org/v2/measurements?city=${city}&parameter=${parameter}&date_from=${fromDate}&date_to=${toDate}&limit=1000`
+  );
+  const data = await response.json();
+  return data.results;
+}
