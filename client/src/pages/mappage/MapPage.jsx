@@ -71,7 +71,6 @@ const MapPage = () => {
   const [satelliteView, setSatelliteView] = useState(false);
   const [noDataMessage, setNoDataMessage] = useState("");
   const [aqiData, setAqiData] = useState([]);
-  const [userLocation, setUserLocation] = useState(null);
   const [customPin, setCustomPin] = useState(null);
   const inputRef = useRef();
 
@@ -109,7 +108,7 @@ const MapPage = () => {
     setSearchInput(city.name);
     setSuggestions([]);
     setNoDataMessage("");
-    setCustomPin(null); // clear any custom pin
+    setCustomPin(null);
   };
 
   const handleKeyDown = (e) => {
@@ -127,48 +126,6 @@ const MapPage = () => {
   };
 
   const toggleSatellite = () => setSatelliteView(!satelliteView);
-
-  const handleUseMyLocation = async () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_SERVER_URL}/api/aqi-coords?lat=${lat}&lon=${lon}`
-        );
-        const data = await res.json();
-
-        if (data.error) {
-          alert("AQI fetch failed: " + data.error);
-          return;
-        }
-
-        setUserLocation({
-          lat,
-          lon,
-          aqi: data.aqi,
-          pollutant: data.pollutant,
-          city: data.city || "Unknown",
-          source: data.source || "coord-api"
-        });
-
-        setMarkerPosition([lat, lon]);
-        setSelectedCity(null);
-        setNoDataMessage("");
-        setCustomPin(null);
-      } catch (err) {
-        alert("Something went wrong: " + err.message);
-      }
-    }, () => {
-      alert("Unable to retrieve your location.");
-    });
-  };
 
   return (
     <div style={{ height: "100vh", width: "100%", position: "relative" }}>
@@ -251,17 +208,6 @@ const MapPage = () => {
           </div>
         )}
 
-        <button onClick={handleUseMyLocation} style={{
-          marginTop: "8px",
-          width: "100%",
-          padding: "6px 10px",
-          backgroundColor: "#00996D",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer"
-        }}>📍 Use My Location</button>
-
         <button onClick={toggleSatellite} style={{
           marginTop: "8px",
           width: "100%",
@@ -332,25 +278,6 @@ const MapPage = () => {
                 AQI: {selectedCity.aqi}<br />
                 Pollutant: {selectedCity.pollutant}<br />
                 Source: {selectedCity.source || "city-api"}
-              </Popup>
-            </CircleMarker>
-          </>
-        )}
-
-        {/* User Location */}
-        {userLocation && (
-          <>
-            <MapFlyTo position={[userLocation.lat, userLocation.lon]} />
-            <CircleMarker center={[userLocation.lat, userLocation.lon]} radius={12} pathOptions={{
-              color: getAQIColor(userLocation.aqi),
-              fillColor: getAQIColor(userLocation.aqi),
-              fillOpacity: 0.8
-            }}>
-              <Popup>
-                📍 You are near {userLocation.city}<br />
-                AQI: {userLocation.aqi}<br />
-                Pollutant: {userLocation.pollutant}<br />
-                Source: {userLocation.source || "coord-api"}
               </Popup>
             </CircleMarker>
           </>
