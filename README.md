@@ -60,20 +60,5 @@ Unlike typical AQI apps that only serve metro areas, **Prāṇa Swarakṣā** br
 | Storage      | Firebase / JSON server (prototype)|
 | Offline/SMS  | Twilio / Mocked fallback layer    |
 
----
 
-## 🚀 Getting Started
 
-### 🔧 Prerequisites
-
-- Node.js (v18+)
-- Git
-- API Keys (Mapbox, AQI sources)
-
-### ⚙️ Installation
-
-```bash
-git clone https://github.com/yourusername/prana-swaraksha.git
-cd prana-swaraksha
-npm install
-npm run dev
