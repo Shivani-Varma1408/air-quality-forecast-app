@@ -5,7 +5,7 @@ A real-time air quality visualizer and health advisory platform tailored for rur
 
 ---
 
-## 📱 Live Features (Days 1–5)
+## 📱 Live Features
 
 ### ✅ Home Page
 - Search city or auto-detect location
