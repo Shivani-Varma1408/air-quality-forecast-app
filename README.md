@@ -1,64 +1,64 @@
-# 🌱 Prāṇa Swarakṣā – We Protect Your Breath
+# 🌿 Prāṇa Swarakṣā
 
-**Prāṇa Swarakṣā** is an intelligent air quality visualization and forecasting platform designed especially for underserved rural and health-vulnerable regions in India. It bridges the urban–rural AQI divide using satellite data, weather intelligence, and community participation — turning raw pollution data into actionable, localized alerts for farmers, schools, health workers, and everyday citizens.
-
----
-
-## 🌍 Why Prāṇa Swarakṣā?
-
-> “Apps only care about big cities. My village is invisible.”
-
-Unlike typical AQI apps that only serve metro areas, **Prāṇa Swarakṣā** brings air quality insight to everyone — even in sensor deserts — with transparency, multilingual access, and role-based UX.
+**“For every breath, in every corner of India.”**  
+A real-time air quality visualizer and health advisory platform tailored for rural, underserved, and health-vulnerable communities.
 
 ---
 
-## 🔑 Key Features
+## 📱 Live Features (Days 1–5)
 
-### 📡 AQI Estimation & Access
-- Multi-source AQI: Sensor + Satellite + Weather
-- Sensor desert detection map
-- Confidence scores & AQI source labels
-- Offline support + SMS fallback
+### ✅ Home Page
+- Search city or auto-detect location
+- Real-time AQI with PM2.5 / PM10 values
+- Color-coded health indicators
+- Source labels (Ground / Satellite)
+- “No Data” fallback card
 
-### 🩺 Health & Forecasting
-- Personalized health risk alerts (age, conditions, occupation)
-- Smart mask recommendations (N95/cloth/surgical)
-- Explainable 3-day AQI forecasts
-- Hospital visit delay advisor
+### ✅ Map Page
+- Interactive Leaflet.js map with AQI-colored pins
+- User's location pin drop
+- Satellite view toggle (ISRO Bhuvan static overlay)
+- Marker popups with pollutant data + source labels
 
-### 🌾 Rural & Farmer Tools
-- Agri spray timing alerts
-- Pollinator (bee) safety alerts
-- SMS tips for low-data users
-- Crop yield risk warnings
+### ✅ Health & Advisory Page
+- Personalized risk cards (e.g., “Wear N95”, “Avoid outdoor PE”)
+- Indian vs WHO standard toggle
+- Rural-specific suggestions (e.g., firewood warnings)
+- Source-based confidence message
 
-### 🧑‍🤝‍🧑 Inclusive UX & Community
-- Dashboards for Farmers, Schools, NGOs, Urban Users
-- Multilingual interface (Hindi, Tamil, etc.)
-- Emoji-based AQI reporting
-- Shareable AQI cards, NGO data exports
-
----
-
-## 🖼️ UI & UX Overview
-
-- **Role-based onboarding**: Users select their role to personalize experience
-- **Map-based AQI visuals**: Color-coded zones with source explanations
-- **Health widgets**: Daily risk, mask tip, and hospital alerts
-- **Farmer dashboard**: Spray timing, wind conditions, rainfall overlay
+### ✅ Historical Trends Page
+- Recharts line graph with pollutant filters
+- Date & location selectors
+- Data source labels on chart
+- Optional satellite view toggles
 
 ---
 
-## 🏗️ Tech Stack
+## 🧱 Tech Stack
 
-| Layer        | Tech Used                         |
-|--------------|-----------------------------------|
-| Frontend     | React + Tailwind (Vite setup)     |
-| Backend      | Node.js + Express (API Layer)     |
-| Data Sources | Satellite APIs, OpenAQ, Weather   |
-| Maps         | Leaflet.js / Mapbox               |
-| Storage      | Firebase / JSON server (prototype)|
-| Offline/SMS  | Twilio / Mocked fallback layer    |
+### Frontend
+- `React.js`, `React Router DOM`
+- `Tailwind CSS`, `Recharts`
+- `Leaflet.js`, `Axios`
 
+### Backend
+- `Node.js`, `Express`
+- `.env`, `cors`, `dotenv`
 
+### APIs
+- `OpenAQ`, `Open-Meteo`, `OpenWeatherMap`
+- `ISRO Bhuvan (Static Tiles)`
+- `Nominatim OSM` for reverse geocoding
+
+### Database & Auth
+- `Firebase` (Firestore + Auth)
+
+---
+
+## 🧠 Inclusivity Features
+- “📍 Use My Location” support
+- “No AQI Data” fallback UI
+- Labels for AQI Source (Sensor / Satellite / Heuristic)
+- Rural-specific health tips
+- Multilingual support (in progress)
 
