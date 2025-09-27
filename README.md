@@ -62,3 +62,5 @@ A real-time air quality visualizer and health advisory platform tailored for rur
 - Rural-specific health tips
 - Multilingual support (in progress)
 
+## Youtube Link
+- https://youtu.be/Y1eT8upvbTg?feature=shared
